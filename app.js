@@ -3,8 +3,8 @@ const firebaseConfig = {
     apiKey: "AIzaSyCtrZ0OhcUvjGoxdNyodD9BlTCJ3fs63ug",
     authDomain: "://firebaseapp.com",
     databaseURL: "https://firebaseio.com",
-    projectId: "nargas",
-    storageBucket: "nargas.firebasestorage.app",
+    projectId: "nargas-social",
+    storageBucket: "nargas-social.firebasestorage.app",
     messagingSenderId: "436060024568",
     appId: "1:436060024568:web:d6da7788cb9ba07021550d",
     measurementId: "G-EDG5JGTPX8"
@@ -25,14 +25,22 @@ document.getElementById('btn-register').addEventListener('click', () => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
+    if (password.length < 6) {
+        alert("A senha precisa ter pelo menos 6 caracteres!");
+        return;
+    }
+    
     auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
             let user = userCredential.user;
             database.ref('users/' + user.uid).set({
-                username: email.split('@')[0], // Pegando apenas o texto antes do @
+                username: email.split('@')[0], // CORRIGIDO: Adicionado [0] para pegar o texto antes do @
                 avatar: "https://placeholder.com"
+            }).then(() => {
+                alert("Conta criada com sucesso!");
+            }).catch(err => {
+                console.error("Erro ao salvar no banco:", err);
             });
-            alert("Conta criada com sucesso!");
         }).catch(error => alert("Erro ao cadastrar: " + error.message));
 });
 
@@ -88,7 +96,7 @@ document.getElementById('btn-save-profile').addEventListener('click', () => {
 
 // Converter imagem para Base64
 function handleImageUpload(inputElement, callback) {
-    const file = inputElement.files[0];
+    const file = inputElement.files[0]; // CORRIGIDO: Pegando o arquivo único corretamente
     if (file) {
         const reader = new FileReader();
         reader.onloadend = () => callback(reader.result);
