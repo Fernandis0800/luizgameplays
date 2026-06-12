@@ -1,13 +1,13 @@
 // CONFIGURAÇÃO DO BANCO DE DADOS DO FIREBASE
-// Substitua os dados abaixo com as credenciais do seu projeto Firebase (Console do Firebase)
 const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    databaseURL: "SUA_DATABASE_URL",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
+    apiKey: "AIzaSyCtrZ0OhcUvjGoxdNyodD9BlTCJ3fs63ug",
+    authDomain: "://firebaseapp.com",
+    databaseURL: "https://firebaseio.com",
+    projectId: "nargas",
+    storageBucket: "nargas.firebasestorage.app",
+    messagingSenderId: "436060024568",
+    appId: "1:436060024568:web:d6da7788cb9ba07021550d",
+    measurementId: "G-EDG5JGTPX8"
 };
 
 // Inicializa o Firebase
@@ -24,11 +24,12 @@ let currentUser = null;
 document.getElementById('btn-register').addEventListener('click', () => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    
     auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
             let user = userCredential.user;
             database.ref('users/' + user.uid).set({
-                username: email.split('@')[0],
+                username: email.split('@')[0], // Pegando apenas o texto antes do @
                 avatar: "https://placeholder.com"
             });
             alert("Conta criada com sucesso!");
@@ -38,12 +39,14 @@ document.getElementById('btn-register').addEventListener('click', () => {
 document.getElementById('btn-login').addEventListener('click', () => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    auth.signInWithEmailAndPassword(email, password).catch(error => alert("Erro ao entrar: " + error.message));
+    
+    auth.signInWithEmailAndPassword(email, password)
+        .catch(error => alert("Erro ao entrar: " + error.message));
 });
 
 document.getElementById('btn-logout').addEventListener('click', () => auth.signOut());
 
-// Monitor de estado do Usuário (Sabe se você está logado ou não)
+// Monitor de estado do Usuário
 auth.onAuthStateChanged(user => {
     if (user) {
         currentUser = user;
@@ -64,7 +67,7 @@ function showSection(sectionName) {
     document.getElementById(`${sectionName}-section`).classList.remove('hidden');
 }
 
-// 3. CARREGAR E ATUALIZAR PERFIL (Mudar Foto, Nome e Modo Escuro)
+// 3. CARREGAR E ATUALIZAR PERFIL
 function loadUserProfile() {
     database.ref('users/' + currentUser.uid).on('value', snapshot => {
         const data = snapshot.val();
@@ -83,7 +86,7 @@ document.getElementById('btn-save-profile').addEventListener('click', () => {
     alert("Perfil atualizado!");
 });
 
-// Converter imagem para Base64 (Para salvar a foto do perfil e posts sem bugs de servidor)
+// Converter imagem para Base64
 function handleImageUpload(inputElement, callback) {
     const file = inputElement.files[0];
     if (file) {
@@ -100,7 +103,7 @@ document.getElementById('update-avatar-file').addEventListener('change', (e) => 
     });
 });
 
-// Ativador do Modo Escuro (Fundo Preto)
+// Ativador do Modo Escuro
 document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
     if (e.target.checked) {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -109,7 +112,7 @@ document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
     }
 });
 
-// 4. CRIAR POSTAGEM (Foto + Legenda)
+// 4. CRIAR POSTAGEM
 document.getElementById('btn-share').addEventListener('click', () => {
     const caption = document.getElementById('post-caption').value;
     const fileInput = document.getElementById('post-file');
@@ -118,6 +121,7 @@ document.getElementById('btn-share').addEventListener('click', () => {
         database.ref('users/' + currentUser.uid).once('value').then(snapshot => {
             const user = snapshot.val();
             const newPostRef = database.ref('posts').push();
+            
             newPostRef.set({
                 uid: currentUser.uid,
                 username: user.username,
@@ -126,6 +130,7 @@ document.getElementById('btn-share').addEventListener('click', () => {
                 caption: caption,
                 timestamp: Date.now()
             });
+            
             document.getElementById('post-caption').value = "";
             fileInput.value = "";
             showSection('feed');
@@ -133,27 +138,27 @@ document.getElementById('btn-share').addEventListener('click', () => {
     });
 });
 
-// 5. CARREGAR FEED DE AMIGOS COM CURTIDAS E COMENTÁRIOS (Em tempo real)
+// 5. CARREGAR FEED EM TEMPO REAL
 function listenToFeed() {
     database.ref('posts').orderByChild('timestamp').on('value', snapshot => {
         const feedContainer = document.getElementById('feed-container');
         feedContainer.innerHTML = "";
-        
         let posts = [];
+        
         snapshot.forEach(childSnapshot => {
-            posts.unshift({ id: childSnapshot.key, ...childSnapshot.val() }); // Organiza do mais novo para o mais antigo
+            posts.unshift({ id: childSnapshot.key, ...childSnapshot.val() }); 
         });
-
+        
         posts.forEach(post => {
             const likesCount = post.likes ? Object.keys(post.likes).length : 0;
-            
             let commentsHtml = "";
+            
             if (post.comments) {
                 Object.values(post.comments).forEach(c => {
                     commentsHtml += `<p><strong>${c.username}:</strong> ${c.text}</p>`;
                 });
             }
-
+            
             const postElement = document.createElement('div');
             postElement.className = 'instagram-post';
             postElement.innerHTML = `
@@ -177,14 +182,14 @@ function listenToFeed() {
     });
 }
 
-// Sistema de Curtir Sem Bugs
+// Sistema de Curtir
 function likePost(postId) {
     const likeRef = database.ref(`posts/${postId}/likes/${currentUser.uid}`);
     likeRef.once('value', snapshot => {
         if (snapshot.exists()) {
-            likeRef.remove(); // Descurtir se já clicou
+            likeRef.remove(); 
         } else {
-            likeRef.set(true); // Curtir
+            likeRef.set(true); 
         }
     });
 }
@@ -194,7 +199,7 @@ function addComment(postId) {
     const input = document.getElementById(`comment-in-${postId}`);
     const text = input.value;
     if (text.trim() === "") return;
-
+    
     database.ref('users/' + currentUser.uid).once('value').then(snapshot => {
         const user = snapshot.val();
         database.ref(`posts/${postId}/comments`).push({
